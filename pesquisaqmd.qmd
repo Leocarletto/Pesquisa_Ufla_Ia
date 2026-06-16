@@ -1,7 +1,32 @@
-#limpeza####
+---
+title: "Como os biocombustíveis podem ajudar a diminuir a poluição"
+author: "Leonardo Carletto"
+date: today
+lang: pt-br
+format:
+  html:
+    theme: [litera, styles.scss]
+    highlight-style: tomorrow-night-bright-r-classic.theme
+    toc: true
+    toc-location: right
+    code-fold: false
+    embed-resources: true
+    include-after-body: footer.html
+---
+
+## Quarto
+
+Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+
+## R
+
+```{r, limpeza e pacotes}
+#| include: false
+
 library(readxl)
 library(tidyverse)
 library(forcats)
+library(gt)
 
 search_ai_statistics <- read_excel("pesquisa_sobre_ia_estatistica_ufla.xlsx")
 
@@ -37,40 +62,79 @@ projeto_pesquisa_estatistica$classe <- ifelse(
   "Discente"
 )
 
+```
 
-#professor x alunos ia #####
+You can add options to executable code like this
 
-tabelaprofxia <- data.frame(
+```{r professor x alunos limpeza}
+#| include: false
+
+tabelaclassexia <- data.frame(
   classe = projeto_pesquisa_estatistica$classe,
   ia_para_programar    = projeto_pesquisa_estatistica$ia_para_programar
 )
-tabelaprofxia <- tabelaprofxia[-c(6, 15, 20, 40, 53, 59), ]
-tabelaprofxia$classe <- as.factor(tabelaprofxia$classe)
-tabelaprofxia$ia_para_programar <- as.factor(tabelaprofxia$ia_para_programar)
-tabelaprofxia <- droplevels(tabelaprofxia)
-summary(tabelaprofxia)
-#organizacao#####
+tabelaclassexia <- tabelaclassexia[-c(6, 15, 20, 40, 53, 59), ]
+tabelaclassexia$classe <- as.factor(tabelaclassexia$classe)
+tabelaclassexia$ia_para_programar <- as.factor(tabelaclassexia$ia_para_programar)
+tabelaclassexia <- droplevels(tabelaclassexia)
+summary(tabelaclassexia)
 
-#qui quadrado
-propprofxia <- table (tabelaprofxia)
-propprofxia <- prop.table
-quiprofxia <- chisq.test(propprofxia) 
+classexia <- table(tabelaclassexia$classe,
+                    tabelaclassexia$ia_para_programar)
 
-#Relevancia regulacao######
-summary(tabelarelevancia)
+propclassexia <- prop.table(classexia)
+
+classexia
+
+quiclassexia <- chisq.test(classexia)
+quiclassexia
+
+```
+
+```{r, professor x alunos}
+#| echo: false
+
+classexia
+
+quiclassexia
+
+round(propclassexia, digits = 2)
+
+```
+
+
+```{r, classes x regulamentacao 2x3 limpeza}
+#| include: false
+
 relevancia <- projeto_pesquisa_estatistica
 
 tabelarelevancia <- data.frame(
   Sente_falta_Governanca = relevancia$sente_falta_de_governanca_ia,
-  classe    = relevancia$classe
+  classe                 = relevancia$classe
 )
+
 tabelarelevancia$classe <- as.factor(tabelarelevancia$classe)
+summary(tabelarelevancia)
 
 tabfreqrelevancia <- table(tabelarelevancia$Sente_falta_Governanca,
-                 tabelarelevancia$classe)
+                           tabelarelevancia$classe)
+
+
+proptabfreqrelevancia <- prop.table(tabfreqrelevancia)
+
+
+chisqtestelevancia <- chisq.test(tabfreqrelevancia)
+
+
+
+```
+
+```{r classes x regulamentacao 2x3}
+#| echo: false
+
 tabfreqrelevancia
+chisqtestelevancia
+round(proptabfreqrelevancia, digits = 2)
 
-chisqtestelevancia <- chisq.test(tabfreqrelevancia) 
-
-
-
+```
+The `echo: false` 
