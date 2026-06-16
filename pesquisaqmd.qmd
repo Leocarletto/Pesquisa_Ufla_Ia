@@ -27,6 +27,7 @@ library(readxl)
 library(tidyverse)
 library(forcats)
 library(gt)
+library(knitr)
 
 search_ai_statistics <- read_excel("pesquisa_sobre_ia_estatistica_ufla.xlsx")
 
@@ -74,9 +75,13 @@ tabelaclassexia <- data.frame(
   ia_para_programar    = projeto_pesquisa_estatistica$ia_para_programar
 )
 tabelaclassexia <- tabelaclassexia[-c(6, 15, 20, 40, 53, 59), ]
+
 tabelaclassexia$classe <- as.factor(tabelaclassexia$classe)
+
 tabelaclassexia$ia_para_programar <- as.factor(tabelaclassexia$ia_para_programar)
+
 tabelaclassexia <- droplevels(tabelaclassexia)
+
 summary(tabelaclassexia)
 
 classexia <- table(tabelaclassexia$classe,
@@ -84,24 +89,56 @@ classexia <- table(tabelaclassexia$classe,
 
 propclassexia <- prop.table(classexia)
 
-classexia
 
 quiclassexia <- chisq.test(classexia)
-quiclassexia
+
+qui1    <- chisq.test(classexia)
+fisher1 <- fisher.test(classexia)
+
+
 
 ```
 
 ```{r, professor x alunos}
 #| echo: false
 
-classexia
+propclassexia |>
+  as.data.frame.matrix() |>
+  tibble::rownames_to_column("Classe") |>
+  gt() |>
+  tab_header(title = "Classe × IA para programar") |>
+  fmt_percent(columns = -Classe, decimals = 1)
 
-quiclassexia
+classexia |>
+  as.data.frame.matrix() |>
+  tibble::rownames_to_column("Classe") |>
+  gt() |>
+  tab_header(title = "Classe × IA para programar")
 
-round(propclassexia, digits = 2)
+data.frame(
+  Teste   = c("Qui-Quadrado", "Exato de Fisher"),
+  Estatistica = c(round(qui1$statistic, 3), NA),
+  gl      = c(qui1$parameter, NA),
+  p_valor = c(qui1$p.value, fisher1$p.value)
+) |>
+  gt() |>
+  tab_header(title = "Classe × IA para programar",
+             subtitle = "Qui-Quadrado vs. Exato de Fisher") |>
+  cols_label(Estatistica = "χ²", gl = "gl", p_valor = "p-valor") |>
+  fmt_number(columns = p_valor, decimals = 4) |>
+  sub_missing(missing_text = "—")
 
+
+fisher1
 ```
 
+>Qui quadrado
+> **p < `0,05` → `rejeita H₀` → `há evidência` de associação entre classe e uso de IA.**
+> **p ≥ `0,05` → `não rejeita H₀` → `não há evidência` suficiente para afirmar que existe associação.**
+
+>Teste de fisher
+> **p < `0,05` → `rejeita H₀` → `há evidência` de associação entre classe e uso de IA para programar.**
+> **p ≥ `0,05` → `não rejeita H₀` → `não há evidência` suficiente para afirmar que existe associação entre classe e uso de IA para programar.**
 
 ```{r, classes x regulamentacao 2x3 limpeza}
 #| include: false
@@ -123,8 +160,9 @@ tabfreqrelevancia <- table(tabelarelevancia$Sente_falta_Governanca,
 proptabfreqrelevancia <- prop.table(tabfreqrelevancia)
 
 
-chisqtestelevancia <- chisq.test(tabfreqrelevancia)
 
+qui2    <- chisq.test(tabfreqrelevancia)
+fisher2 <- fisher.test(tabfreqrelevancia)
 
 
 ```
@@ -132,9 +170,72 @@ chisqtestelevancia <- chisq.test(tabfreqrelevancia)
 ```{r classes x regulamentacao 2x3}
 #| echo: false
 
-tabfreqrelevancia
-chisqtestelevancia
-round(proptabfreqrelevancia, digits = 2)
+tabfreqrelevancia |>
+  addmargins() |>
+  as.data.frame.matrix() |>
+  tibble::rownames_to_column("Sente falta de governança") |>
+  gt() |>
+  tab_header(title = "Sente falta de governança x Classe") 
+
+proptabfreqrelevancia |>
+  as.data.frame.matrix() |>
+  tibble::rownames_to_column("Sente falta de governança") |>
+  gt() |>
+  tab_header(title = "Sente falta de governança x Classe") |>
+  fmt_percent(columns = -1, decimals = 1)
+
+data.frame(
+  Teste   = c("Qui-Quadrado", "Teste de Fisher"),
+  Estatistica = c(round(qui2$statistic, 3), NA),
+  gl      = c(qui2$parameter, NA),
+  p_valor = c(qui2$p.value, fisher2$p.value)
+) |>
+  gt() |>
+  tab_header(title = "Sente falta de governança x Classe",
+             subtitle = "Qui-Quadrado vs. Teste de Fisher") |>
+  cols_label(Estatistica = "χ²", gl = "gl", p_valor = "p-valor") |>
+  fmt_number(columns = p_valor, decimals = 4) |>
+  sub_missing(missing_text = "—")
+```
+>Qui quadrado
+> **p < `0,05` → `rejeita H₀` → `há evidência` de associação entre classe e uso de IA.**
+> **p ≥ `0,05` → `não rejeita H₀` → `não há evidência` suficiente para afirmar que existe associação.**
+
+>Teste de fisher
+> **p < `0,05` → `rejeita H₀` → `há evidência` de associação entre classe e uso de IA para programar.**
+> **p ≥ `0,05` → `não rejeita H₀` → `não há evidência` suficiente para afirmar que existe associação entre classe e uso de IA para programar.**
+
+```{r}
+library(knitr)
+
+#"Você sente falta de governança e regulamentação sobre o uso de Inteligência Artificial no ambiente acadêmico?"
+
+kable(data.frame(Resposta = c("Não","Não sei dizer","Sim"),
+                 Discente = c(4,11,35), Professor = c(1,1,14)),
+      caption = "Você sente falta de governança e regulamentação sobre o uso de Ai?")
+
+kable(data.frame(Resposta = c("Não","Não sei dizer","Sim"),
+                 Discente = c("6.1%","16.7%","53.0%"),
+                 Professor = c("1.5%","1.5%","21.2%")),
+      caption = "Você sente falta de governança e regulamentação sobre o uso de Ai?")
+
+kable(data.frame(Teste = c("Qui-Quadrado","Teste de Fisher"),
+                 `χ²` = c("2.203","—"), gl = c("2","—"),
+                 `p-valor` = c("0.3324","0.3291"), check.names = FALSE),
+      caption = "Você sente falta de governança e regulamentação sobre o uso de Ai? - Qui-Quadrado vs. Fisher")
+
+#Voce usa ferramentas ia para programar
+kable(data.frame(Classe = c("Discente","Professor"),
+                 Não = c("10.0%","6.7%"), Sim = c("65.0%","18.3%")),
+      caption = "Usa Ia para Depuração De Codigos?")
+
+kable(data.frame(Classe = c("Discente","Professor"),
+                 Não = c(6,4), Sim = c(39,11)),
+      caption = "Usa Ia para Depuração De Codigos?")
+
+kable(data.frame(Teste = c("Qui-Quadrado","Exato de Fisher"),
+                 `χ²` = c("0.64","—"), gl = c("1","—"),
+                 `p-valor` = c("0.4237","0.2496"), check.names = FALSE),
+      caption = "Usa Ia para Depuração De Codigos? — Qui-Quadrado vs. Fisher")
 
 ```
-The `echo: false` 
